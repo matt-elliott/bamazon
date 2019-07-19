@@ -28,7 +28,7 @@ async function showAllProducts() {
   let res = await connection.execute(query);
   //store results in array
   products = res[0];
-  // console.table(products);
+  console.table(products);
 }
 
 async function promptUser() {
@@ -51,47 +51,88 @@ async function promptUser() {
     }
   ]);
   
-  let product = productSelected.product[0];
+  let productName = productSelected.product[0];
   let quantity = productQuantity.quantity;
-  console.log(productSelected);
+  
   //place the order
-  let product_id = await getProductID(product);
-  placeOrder(product_id, product, quantity);
+  let product_id = await getProductID(productName);
+  placeOrder(product_id, productName, quantity);
 }
 
 function getProductID(selectedProductName) {
-  products.filter(function(product) {
-    if( product.name === selectedProductName ) {
-      return product.item_id;
+  return new Promise(function (resolve, reject) {
+    for(var i = 0; i < products.length; i++) {
+      if( products[i].name === selectedProductName ) {
+        resolve(products[i].item_id);
+        break;
+      } else if (i === products.length - 1) {
+        reject(Error('No Matches'));
+        connection.end();
+      }
     }
-  })
+  });
 }
 
-function placeOrder(id, product, quantity) {
-  
+async function placeOrder(id, productName, quantity) {
+  order = new Order(id, productName, quantity);
   //receive id and quantity
   //check if there is enough stock for user order
-
+  let hasStock = await stockCheck(order, quantity);
   //if there is enough stock fullfill order
   //if not reject order
+  if(hasStock) {
+    order.fullfillOrder();
+  } else {
+    order.rejectOrder();
+  }
 }
 
-function stockCheck() {
-  //check if there is enough stock
+async function stockCheck(product, quantity) {
+  // check if there is enough stock
+  const query = `SELECT * FROM products WHERE item_id = "${product.id}"`;
+  let [rows, fields] = await connection.execute(query);
+  let availableStock = rows[0].stock_quantity;
+
+  if( availableStock >= quantity) {
+    return true;
+  } else {
+    return false;
+  }
 }
 
-function Order(id, name, quantity) {
-  this.item_id = id;
+function Order(id, name, quantity, price) {
+  this.id = id;
   this.item_name = name;
   this.quantity = quantity;
   
   this.rejectOrder = function () {
-    //tell customer the reason and end the process
+    //todo have this show how much stock is left on product
+    console.log(colors.bgRed.white.bold(`Sorry, there is not enough stock to complete your order. Please try again with less quantity. There are only X left!`));
+    connection.end();
   };
 
-  this.fullfillOrder = function () {
+  this.fullfillOrder = async function () {
     //decrease quantity on item
-    //show final cost to customer
+    const query = `UPDATE products SET stock_quantity = stock_quantity - ${this.quantity} WHERE item_id = ${this.id}`;
+    try {
+      let res = await connection.execute(query);
+      //show final cost to customer
+      if(res[0].serverStatus === 2) {
+        this.showPrice();
+        connection.end();
+      }
+    } catch(error) {
+      console.log(colors.bgRed.white.bold(error));
+      connection.end();
+    }
+  };
+
+  this.showPrice = async function() {
+    const query = `SELECT price FROM products WHERE item_id = ${this.id}`;
+    let [rows, fields] = await connection.execute(query);
+    let totalPrice = rows[0].price * this.quantity;
+  
+    console.log(colors.bgGreen.white.bold('Order total : $', totalPrice));
   }
 };
 
