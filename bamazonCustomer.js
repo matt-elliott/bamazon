@@ -28,6 +28,7 @@ async function showAllProducts() {
   let res = await connection.execute(query);
   //store results in array
   products = res[0];
+  //todo install and use npm ascii to show some ascii art for the store name and final price
   console.table(products);
 }
 
