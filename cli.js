@@ -13,7 +13,7 @@ async function connectToDB() {
       port: process.env.PORT,
       user: process.env.USERNAME,
       password: process.env.PASS,
-      database: 'bamazon'
+      database: process.env.DB
     });
     console.log(colors.bgGreen.white.bold('Connected to DB!'));
   } catch (error) {
@@ -22,7 +22,6 @@ async function connectToDB() {
 }
 
 
-// TODO : first display all products in table
 async function showAllProducts() {
   const query = 'SELECT * FROM bamazon.products';
   //query db
@@ -33,51 +32,46 @@ async function showAllProducts() {
 }
 
 async function promptUser() {
-  let availableProducts = [];
-  
-  products.forEach(function (product) {
-    availableProducts.push(` ${product.item_id}  ${product.product_name}`);
-  });
-
   //first ask id of product they want to buy
   let productSelected = await inquirer.prompt([
     {
       type: 'checkbox',
       message: 'Select a product to buy?',
       name: 'product',
-      choices: availableProducts
+      choices: products
     }
   ]);
-  
 
   //then ask how many user wants to buy
   let productQuantity = await inquirer.prompt([
     {
       type: 'number',
-      message: `How many ${productSelected} would you like?`,
+      message: `How many ${productSelected.product[0]}'s would you like?`,
       name: 'quantity'
     }
   ]);
   
   let product = productSelected.product[0];
   let quantity = productQuantity.quantity;
-
-  makeOrder(product, quantity);
-  placeOrder();
-  //call place order
+  console.log(productSelected);
+  //place the order
+  let product_id = await getProductID(product);
+  placeOrder(product_id, product, quantity);
 }
 
-function makeOrder(product, quantity) {
-  let id = product.trim().split(' ')[0];
-  let name = product.trim().slice(1);
+function getProductID(selectedProductName) {
+  products.filter(function(product) {
+    if( product.name === selectedProductName ) {
+      return product.item_id;
+    }
+  })
+}
+
+function placeOrder(id, product, quantity) {
   
-  order = Order(id, name, quantity);
-  console.log(order);
-}
-
-function placeOrder() {
   //receive id and quantity
   //check if there is enough stock for user order
+
   //if there is enough stock fullfill order
   //if not reject order
 }
