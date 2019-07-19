@@ -3,11 +3,11 @@ CREATE DATABASE bamazon;
 USE bamazon;
 
 CREATE TABLE products(
-  item_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-  name VARCHAR NOT NULL,
-  department_name VARCHAR NOT NULL,
-  price DECIMAL NOT NULL,
-  stock_quantity DECIMAL NOT NULL
+  item_id INT(10) NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(250) NOT NULL,
+  department_name VARCHAR(250) NOT NULL,
+  price DECIMAL(10,4) NOT NULL,
+  stock_quantity INT(10) NOT NULL
 );
 
 INSERT INTO products(

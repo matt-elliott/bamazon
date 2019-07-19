@@ -101,7 +101,7 @@ async function stockCheck(product, quantity) {
   }
 }
 
-function Order(id, name, quantity, price) {
+function Order(id, name, quantity) {
   this.id = id;
   this.item_name = name;
   this.quantity = quantity;
@@ -140,8 +140,10 @@ function Order(id, name, quantity, price) {
 (async function () {
   try {
     await connectToDB();
-    await showAllProducts(); 
-    await promptUser();
+    // while (connection != undefined) {
+      await showAllProducts(); 
+      await promptUser();        
+    // }
   } catch (error) {
     console.log(colors.bgRed.white.bold(error));
   }
